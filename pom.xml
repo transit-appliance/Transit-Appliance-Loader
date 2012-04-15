@@ -1,0 +1,116 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <!--
+      Copyright 2012 Portland Transport
+
+      Licensed under the Apache License, Version 2.0 (the "License");
+      you may not use this file except in compliance with the License.
+      You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+      Unless required by applicable law or agreed to in writing, software
+      distributed under the License is distributed on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+      See the License for the specific language governing permissions and
+      limitations under the License.
+  -->
+
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.transitappliance.loader</groupId>
+  <artifactId>loader</artifactId>
+  <packaging>jar</packaging>
+  <version>1.0-SNAPSHOT</version>
+  <name>loader</name>
+  <url>http://maven.apache.org</url>
+   <!-- Shared version number properties -->
+   <properties>
+     <org.springframework.version>3.0.5.RELEASE</org.springframework.version>
+     <org.onebusaway.version>1.2.6</org.onebusaway.version>
+   </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.1</version>
+      <scope>test</scope>
+    </dependency>
+    
+    <!--
+        Core utilities used by other modules.
+        Define this if you use Spring Utility APIs (org.springframework.core.*/org.springframework.util.*)
+    -->
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-core</artifactId>
+      <version>${org.springframework.version}</version>
+    </dependency>
+    
+    <!--
+        Bean Factory and JavaBeans utilities (depends on spring-core)
+        Define this if you use Spring Bean APIs (org.springframework.beans.*)
+    -->
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-beans</artifactId>
+      <version>${org.springframework.version}</version>
+    </dependency>
+    
+    <!--
+        Application Context (depends on spring-core, spring-expression, spring-aop, spring-beans)
+        This is the central artifact for Spring's Dependency Injection Container and is generally always defined
+    -->
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context</artifactId>
+      <version>${org.springframework.version}</version>
+    </dependency>
+
+    <!-- Core GTFS Library -->
+    <dependency>
+        <groupId>org.onebusaway</groupId>
+        <artifactId>onebusaway-gtfs</artifactId>
+        <version>${org.onebusaway.version}</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <!-- http://codestuff.wordpress.com/2008/04/09/setting-compiler-level-for-maven/ -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>1.6</source>
+          <target>1.6</target>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>2.3</version>
+
+        <configuration>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+          <archive>
+            <manifest>
+              <mainClass>org.transitappliance.loader.LoaderFrontEnd</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+        <executions>
+          <execution>
+            <id>make-assembly</id> <!-- this is used for inheritance merges -->
+            <phase>package</phase> <!-- bind to the packaging phase -->
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>
