@@ -18,22 +18,29 @@ package org.transitappliance.loader;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.io.File;
+import java.io.IOException;
 import org.onebusaway.gtfs.serialization.GtfsReader;
 import org.onebusaway.csv_entities.EntityHandler;
-import org.onebusawaygtfs.model.Stop;
-import org.onebusawaygtfs.model.Route;
-import org.onebusawaygtfs.model.StopTime;
-import org.onebusawaygtfs.model.Agency;
-import org.onebusawaygtfs.model.AgencyAndId;
+import org.onebusaway.gtfs.model.Stop;
+import org.onebusaway.gtfs.model.Route;
+import org.onebusaway.gtfs.model.StopTime;
+import org.onebusaway.gtfs.model.Agency;
+import org.onebusaway.gtfs.model.AgencyAndId;
 
 public class GTFSDataSourceImpl extends TransitDataSource {
-    // All the stops, routes and stop<->route mappings are saved up front, then the routes are merged into the stops
-    private ArrayList<TAStop> stops = new ArrayList<TAStop>();
+    // All the stops, routes and stop<->route mappings are saved up front, then the routes are 
+    // merged into the stops
+    private HashMap<AgencyAndId, TAStop> stops = new HashMap<AgencyAndId, TAStop>();
     // route ids, routes
-    private HashMap<AgencyAndId, TARoute> routes = new HashMap<String, TARoute>();
+    private HashMap<AgencyAndId, TARoute> routes = new HashMap<AgencyAndId, TARoute>();
     // stop IDs, route IDs
     private HashMap<AgencyAndId, ArrayList<AgencyAndId>> stopRouteMapping = new HashMap<AgencyAndId, ArrayList<AgencyAndId>>();
-    private int stopIndex = 0;
+    // this stores the stops in an unordered fashion when returning them
+    private ArrayList<TAStop> stopsFinal = new ArrayList<TAStop>();
+
+    // we want to start with the first stop, and this is incremented at the start of the loop
+    private int stopIndex = -1;
 
     // This is a string, not a file, b/c eventually we'll want to download http://, ftp:// urls
     // TODO: downloads
@@ -51,6 +58,7 @@ public class GTFSDataSourceImpl extends TransitDataSource {
      */
     @Override
     public void initialize () {
+        System.out.println("Reading GTFS from " + filePath);
         readAndProcessGtfs();
     }
 
@@ -58,7 +66,7 @@ public class GTFSDataSourceImpl extends TransitDataSource {
     /**
      * This saves the relevant entities and discards the rest
      */
-    private class TAEntityHandler extends EntityHandler {
+    private class TAEntityHandler implements EntityHandler {
         private int stopCount = 0;
         private int routeCount = 0;
         private long stopTimeCount = 0;
@@ -73,9 +81,10 @@ public class GTFSDataSourceImpl extends TransitDataSource {
                 
                 TAStop dbStop = new TAStop();
 
-                // Stop.getId() returns AgencyAndId
-                dbStop.agency = stop.getId().getAgencyId();
-                dbStop.stop_id = stop.getId().getId();
+                AgencyAndId stopId = stop.getId();
+                
+                dbStop.agency = stopId.getAgencyId();
+                dbStop.stop_id = stopId.getId();
                 dbStop.id = dbStop.agency + ":" + dbStop.stop_id;
                 dbStop.stop_lat = stop.getLat();
                 dbStop.stop_lon = stop.getLon();
@@ -84,7 +93,7 @@ public class GTFSDataSourceImpl extends TransitDataSource {
                 dbStop.stop_code = stop.getCode();
                 // TODO: extra attributes in attributes HashMap
 
-                stops.add(dbStop);
+                stops.put(stopId, dbStop);
 
                 stopCount++;
                 if (stopCount % 500 == 0)
@@ -116,16 +125,16 @@ public class GTFSDataSourceImpl extends TransitDataSource {
                 
                 // parse it down to a mapping
                 AgencyAndId stopId = st.getStop().getId();
-                AgencyAndId routeId = st.getRoute().getId();
+                AgencyAndId routeId = st.getTrip().getRoute().getId();
 
-                if (!routes.containsKey(stopId)) {
-                    routes.put(stopId, new ArrayList<AgencyAndId>());
+                if (!stopRouteMapping.containsKey(stopId)) {
+                    stopRouteMapping.put(stopId, new ArrayList<AgencyAndId>());
                 }
                 
-                ArrayList routesForStop = routes.get(stopId);
+                ArrayList routesForStop = stopRouteMapping.get(stopId);
                 if (!routesForStop.contains(routeId)) {
                     routesForStop.add(routeId);
-                    routes.put(stopId, routesForStop);
+                    stopRouteMapping.put(stopId, routesForStop);
                 }
 
                 stopTimeCount++;
@@ -139,22 +148,51 @@ public class GTFSDataSourceImpl extends TransitDataSource {
     }
 
     public TAStop getStop () {
-        return null;
+        stopIndex++;
+        return stopsFinal.get(stopIndex);
     }
-
-    /**
-     * An entity handler that converts GTFS to TA types, saves route mappings and discards everythign else.
-     */
 
     /** 
      * Read the GTFS and process it to what we need for TA.
      */
     private void readAndProcessGtfs () {
         GtfsReader reader = new GtfsReader();
-        reader.setInputLocation(filePath);
-        
-        reader.addEntityHandler(new TAEntityHandler());
 
-        reader.run();
+        reader.addEntityHandler(new TAEntityHandler());
+        
+        try {
+            reader.setInputLocation(new File(filePath));
+            reader.run();
+        } 
+        catch (IOException e) {
+            System.out.println("Error reading GTFS " + filePath);
+            System.exit(1);
+        }
+
+        // now, process the relations
+        for (AgencyAndId stopId : stops.keySet()) {
+            TAStop stop = stops.get(stopId);
+           
+            ArrayList<AgencyAndId> routesForStop = stopRouteMapping.get(stopId);
+            
+            if (routesForStop == null) {
+                System.out.println("Warning: stop " + stopId + " has no routes; removing");
+                stops.remove(stopId);
+                continue;
+            }
+
+            // there are no duplicates to worry about; that is checked above
+            for (AgencyAndId routeId : routesForStop) {
+                stop.routes.add(routes.get(routeId));
+            }
+
+            // add it to the output list and remove it from the input to save ram
+            stopsFinal.add(stop);
+            stops.remove(stopId);
+
+            //System.out.println("Stop " + stopId + " has " + stop.routes.size() + " routes");
+        }
+
+        System.out.println("GTFS read; stops " + stopsFinal.size() + ", routes " + routes.size());                          
     }
 }
