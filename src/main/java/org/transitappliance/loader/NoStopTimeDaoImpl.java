@@ -142,7 +142,7 @@ public class NoStopTimeDaoImpl extends GtfsDaoImpl {
 
         for (AgencyAndId stopId : stops.keySet()) {
             TAStop stop = stops.get(stopId);
-         
+
             ArrayList<AgencyAndId> routesForStop = stopRouteMapping.get(stopId);
          
             if (routesForStop == null) {
@@ -171,7 +171,6 @@ public class NoStopTimeDaoImpl extends GtfsDaoImpl {
 
         // used as a template for below
         TAStop[] t = new TAStop[1];
-
         return stops.values().toArray(t);
     }
 }

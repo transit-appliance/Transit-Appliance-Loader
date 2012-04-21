@@ -50,14 +50,19 @@ public class GTFSDataSourceImpl extends TransitDataSource {
      * Initialize the GTFS source: retrieve and unzip.
      */
     @Override
-    public void initialize () {
+    public void initialize (String agencyId) {
+        super.initialize(agencyId);
         System.out.println("Reading GTFS from " + filePath);
         readAndProcessGtfs();
     }
 
     public TAStop getStop () {
         stopIndex++;
-        return stops[stopIndex];
+        if (stopIndex < stops.length)
+            return stops[stopIndex];
+
+        else
+            return null;
     }
 
     /** 
@@ -65,10 +70,12 @@ public class GTFSDataSourceImpl extends TransitDataSource {
      */
     private void readAndProcessGtfs () {
         GtfsReader reader = new GtfsReader();
+
         // This builds stop <-> route mappings. Save a reference so we can pull it out later
         NoStopTimeDaoImpl store = new NoStopTimeDaoImpl();
 
         reader.setEntityStore(store);
+        reader.setDefaultAgencyId(agencyId);
         
         try {
             reader.setInputLocation(new File(filePath));
