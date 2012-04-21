@@ -20,7 +20,7 @@ public class TARoute {
    public String route_id;
    public String route_url;
    public String route_long_name;
-   public String route_type;
+   public int route_type;
    public String route_short_name;
    public String avl_route_id;
 }
