@@ -30,30 +30,37 @@ public class TransitStopLoader {
     }
 
     // This will actually be a subclass of StopSaver 
-//    private StopSaver stopSaver;
+    private StopSaver stopSaver;
     
     /**
      * Set the StopSaver to use. Most will use CouchDB.
      * @param stopSaver the StopSaver to use
-     *//*
+     */
     public void setStopSaver(StopSaver stopSaver) {
         this.stopSaver = stopSaver;
-        }*/
+    }
 
     public void loadStops () {
         System.out.println("Running load for agency " + agencyId);
 
         int stopCount = 0;
 
-        TAStop currentStop = dataSource.getStop();
-        dataSource.initialize();
+        dataSource.initialize(agencyId);
+
+        stopSaver.initialize();
+
+        TAStop currentStop;
         
         // main loop
-        while (currentStop != null) {
+        while (true) {
             currentStop = dataSource.getStop();
-            stopCount++;
+            
+            if (currentStop == null)
+                break;
+
+            stopSaver.saveStop(currentStop);
         }
             
-        
+        stopSaver.serialize();       
     }
 }

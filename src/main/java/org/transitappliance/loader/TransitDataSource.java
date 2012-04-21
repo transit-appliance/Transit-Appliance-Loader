@@ -20,6 +20,8 @@ package org.transitappliance.loader;
  * This defines a source for transit data. It could be a GTFS file, API, &c.
  */
 public abstract class TransitDataSource {
+    protected String agencyId;
+
     /**
      * Return the next stop from this datasource, or null if there are no more stops.
      */
@@ -27,8 +29,10 @@ public abstract class TransitDataSource {
 
     /**
      * Initialize the data source.
+     * @param agencyId The agency ID to be used when building the TAStop objects
      */
-    public void initialize () {
+    public void initialize (String agencyId) {
+        this.agencyId = agencyId;
         // not abstract; some data sources require no initx
     };
 }
