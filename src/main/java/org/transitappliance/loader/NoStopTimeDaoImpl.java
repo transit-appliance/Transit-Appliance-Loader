@@ -169,6 +169,9 @@ public class NoStopTimeDaoImpl extends GtfsDaoImpl {
 
         System.out.println("GTFS read; stops " + stops.size() + ", routes " + routes.size()); 
 
-        return (TAStop[]) stops.values().toArray();
+        // used as a template for below
+        TAStop[] t = new TAStop[1];
+
+        return stops.values().toArray(t);
     }
 }
