@@ -4,11 +4,11 @@
     xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
     http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-2.5.xsd">
   <bean id="transitStopLoader" class="org.transitappliance.loader.TransitStopLoader">
-    <property name="agencyId" value="BART" />
+    <property name="agencyId" value="cta" />
     
     <property name="dataSource">
       <bean class="org.transitappliance.loader.GTFSDataSourceImpl">
-        <property name="filePath" value="/otp/gtfs/bart.zip" />
+        <property name="filePath" value="/otp/gtfs/cta.zip" />
       </bean>
     </property>
 
@@ -16,10 +16,8 @@
       <bean class="org.transitappliance.loader.CouchDbStopSaverImpl">
         <property name="dbHost" value="localhost" />
         <property name="dbPort" value="5984" />
-        <property name="dbName" value="bart_staging" />
-        <!--<property name="bulkUpdate" value="false" />-->
+        <property name="dbName" value="cta_staging" />
       </bean>
     </property>
-
   </bean>
 </beans>
