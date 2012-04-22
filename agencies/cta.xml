@@ -19,5 +19,15 @@
         <property name="dbName" value="cta_staging" />
       </bean>
     </property>
+
+    <property name="stopModifiers">
+      <list>
+        <!-- remove the El; CTA does not provide arrival predictions -->
+        <bean class="org.transitappliance.loader.modifiers.RouteTypeRetainer">
+          <property name="routeType" value="3" />
+        </bean>
+      </list>
+    </property>
+
   </bean>
 </beans>
