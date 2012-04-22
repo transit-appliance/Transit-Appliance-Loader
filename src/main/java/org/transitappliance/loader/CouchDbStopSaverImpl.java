@@ -22,12 +22,12 @@ import java.io.IOException;
 import com.fourspaces.couchdb.Session;
 import com.fourspaces.couchdb.Database;
 import com.fourspaces.couchdb.Document;
+import com.fourspaces.couchdb.ViewResults;
 
 public class CouchDbStopSaverImpl implements StopSaver {
     private Session session;
     private Database db;
     private ArrayList<Document> stops = new ArrayList<Document>();
-    private Document agency;
     
     // spring
     private String dbHost;
@@ -136,31 +136,28 @@ public class CouchDbStopSaverImpl implements StopSaver {
         doc.put("avl_service", agency.avl_service);
         doc.put("rights_notice", agency.rights_notice);
 
-        this.agency = doc;
+        // it's not really a stop, but it should be serialized as well
+        stops.add(doc);
     }
 
     public void serialize () {
         Document[] template = new Document[1];
 
-        // TODO: remove all documents        
-        
+        // delete all existing stops
+        ViewResults allDocs = db.getAllDocuments();
+        for (Document d : allDocs.getResults()) {
+            try {
+                db.deleteDocument(d);
+            } catch (IOException e) {
+                System.out.println("Error deleting " + d.getId() +". Unpredictable things may occur.");
+            }
+        }
+
         try {
-            if (bulkUpdate) {
-                db.bulkSaveDocuments(stops.toArray(template));
-            }
-
-            else {
-                // one-by-one, for CouchDB 1 compatibility
-                for (Document doc : stops) {
-                    System.out.println("Saving stop");
-                    db.saveDocument(doc);
-                }
-            }
-
-            db.saveDocument(agency);
-
+            db.bulkSaveDocuments(stops.toArray(template));
         } catch (IOException e) {
             System.out.println("Error saving stops");
+            System.exit(1);
         }
 
         System.out.println("Stops saved");
