@@ -32,6 +32,8 @@ public class GTFSDataSourceImpl extends TransitDataSource {
     // This is used to store the TAStops
     private TAStop[] stops;
 
+    private TAAgency agency;
+
     // we want to start with the first stop, and this is incremented at the start of the loop
     private int stopIndex = -1;
 
@@ -44,6 +46,15 @@ public class GTFSDataSourceImpl extends TransitDataSource {
      */
     public void setFilePath(String filePath) {
         this.filePath = filePath;
+    }
+
+    /**
+     * If the GTFS has multiple agencies, this must be set so that the correct one is used (Loader does not
+     * support multiagency GTFS).
+     */
+    private String gtfsAgencyId;
+    public void setGtfsAgencyId (String gtfsAgencyId) {
+        this.gtfsAgencyId = gtfsAgencyId;
     }
 
     /**
@@ -65,11 +76,16 @@ public class GTFSDataSourceImpl extends TransitDataSource {
             return null;
     }
 
+    public TAAgency getAgency () {
+        return agency;
+    }
+
     /** 
      * Read the GTFS and process it to what we need for TA.
      */
     private void readAndProcessGtfs () {
         GtfsReader reader = new GtfsReader();
+        Agency agencyIn;
 
         // This builds stop <-> route mappings. Save a reference so we can pull it out later
         NoStopTimeDaoImpl store = new NoStopTimeDaoImpl();
@@ -87,5 +103,32 @@ public class GTFSDataSourceImpl extends TransitDataSource {
         }
 
         stops = store.getStops();
+
+        // build the agency
+        // if this is multiagency gtfs and none is selected
+        if (gtfsAgencyId == null && store.getAllAgencies().size() > 1) {
+            System.out.println("GTFS has multiple agencies and gtfsAgencyId is not defined. Set it to one of:");
+            for (Agency agency : store.getAllAgencies()) {
+                System.out.println(agency.getId() + "(" + agency.getName() + ")");
+            }
+            System.exit(1);
+        }
+
+        if (gtfsAgencyId == null) {
+            agencyIn = (Agency) store.getAllAgencies().toArray()[0];
+        }
+        else {
+            agencyIn = store.getAgencyForId(gtfsAgencyId);
+        }
+
+        // now build the agency
+        agency = new TAAgency();
+        // use the one in the config file not from GTFS
+        agency.id = agencyId;
+        agency.agency_lang = agencyIn.getLang();
+        agency.agency_name = agencyIn.getName();
+        agency.agency_timezone = agencyIn.getTimezone();
+        agency.agency_url = agencyIn.getUrl();
+        // agency.rights_notice set in TransitStopLoader to avoid duplication
     }
 }

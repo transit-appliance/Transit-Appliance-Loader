@@ -16,12 +16,19 @@ limitations under the License.
 
 package org.transitappliance.loader;
 
+import java.util.List;
+
 public class TransitStopLoader {
     // Spring-configured stuff
 
     private String agencyId;
     public void setAgencyId (String agencyId) {
         this.agencyId = agencyId;
+    }
+
+    private String rightsNotice;
+    public void setRightsNotice (String rightsNotice) {
+        this.rightsNotice = rightsNotice;
     }
 
     private TransitDataSource dataSource;
@@ -40,26 +47,61 @@ public class TransitStopLoader {
         this.stopSaver = stopSaver;
     }
 
+    private List<StopModifier> stopModifiers;
+    /**
+     * StopModifiers that should be applied before saving
+     */
+    public void setStopModifiers (List<StopModifier> stopModifiers) {
+        this.stopModifiers = stopModifiers;
+    }
+
     public void loadStops () {
         System.out.println("Running load for agency " + agencyId);
 
         int stopCount = 0;
+        TAAgency agency;
 
         dataSource.initialize(agencyId);
 
         stopSaver.initialize();
 
         TAStop currentStop;
-        
+
         // main loop
         while (true) {
             currentStop = dataSource.getStop();
             
+            // a null here indicates there are no more stops to load
             if (currentStop == null)
                 break;
 
+            // in case we delete it, keep this arounf
+            String stopId = currentStop.id;
+
+            // Process the stop through the modifiers
+            for (StopModifier modifier : stopModifiers) {
+                currentStop = modifier.processStop(currentStop);
+
+                // a null here indicates this stop should be removed
+                // no point in continuing
+                if (currentStop == null) {
+                    System.out.println("Removing stop " + stopId + " by modifier");
+                    break;
+                }
+            }
+
+            // null from above
+            if (currentStop == null)
+                continue;
+
             stopSaver.saveStop(currentStop);
         }
+
+        // save the agency
+        agency = dataSource.getAgency();
+        // this is set here to avoid duplication
+        agency.rights_notice = rightsNotice;
+        stopSaver.saveAgency(agency);
             
         stopSaver.serialize();       
     }

@@ -28,11 +28,16 @@ public abstract class TransitDataSource {
     public abstract TAStop getStop ();
 
     /**
+     * Give the agency for these stops.
+     */
+    public abstract TAAgency getAgency ();
+
+    /**
      * Initialize the data source.
      * @param agencyId The agency ID to be used when building the TAStop objects
      */
     public void initialize (String agencyId) {
         this.agencyId = agencyId;
-        // not abstract; some data sources require no initx
+        // not abstract; some data sources require no init
     };
 }

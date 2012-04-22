@@ -21,7 +21,9 @@ package org.transitappliance.loader;
  */
 public interface StopSaver {
    public void initialize ();
+
    public void saveStop (TAStop stop);
+   public void saveAgency(TAAgency agency);
 
    /** Serialize the data to the database once all stops added */
    public void serialize ();

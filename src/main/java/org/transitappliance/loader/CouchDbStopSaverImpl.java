@@ -27,6 +27,7 @@ public class CouchDbStopSaverImpl implements StopSaver {
     private Session session;
     private Database db;
     private ArrayList<Document> stops = new ArrayList<Document>();
+    private Document agency;
     
     // spring
     private String dbHost;
@@ -120,6 +121,24 @@ public class CouchDbStopSaverImpl implements StopSaver {
         return routesOut.toArray(template);
     }
 
+    /**
+     * Save the agency from a TAAgency object
+     * @param agency The agency to save.
+     */
+    public void saveAgency (TAAgency agency) {
+        Document doc = new Document();
+        doc.put("_id", agency.id);
+        doc.put("agency_lang", agency.agency_lang);
+        doc.put("agency_name", agency.agency_name);
+        doc.put("agency_timezone", agency.agency_timezone);
+        doc.put("agency_url", agency.agency_url);
+        doc.put("avl_agency_id", agency.avl_agency_id);
+        doc.put("avl_service", agency.avl_service);
+        doc.put("rights_notice", agency.rights_notice);
+
+        this.agency = doc;
+    }
+
     public void serialize () {
         Document[] template = new Document[1];
 
@@ -137,6 +156,8 @@ public class CouchDbStopSaverImpl implements StopSaver {
                     db.saveDocument(doc);
                 }
             }
+
+            db.saveDocument(agency);
 
         } catch (IOException e) {
             System.out.println("Error saving stops");
