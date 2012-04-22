@@ -21,5 +21,24 @@
       </bean>
     </property>
 
+    <property name="stopModifiers">
+      <list>
+        <!-- remove AirBART, i.e. retain rail routes. This will also remove the Oakland airport -->
+        <bean class="org.transitappliance.loader.modifiers.RouteTypeRetainer">
+          <property name="routeType" value="1" />
+        </bean>
+
+        <!-- Remove these transfer-based stops -->
+        <bean class="org.transitappliance.loader.modifiers.StopRemover">
+          <property name="stopsToRemove">
+            <list>
+              <value>19TH_N</value>
+              <value>MCAR_S</value>
+            </list>
+          </property>
+        </bean>
+      </list>
+    </property>
+
   </bean>
 </beans>
