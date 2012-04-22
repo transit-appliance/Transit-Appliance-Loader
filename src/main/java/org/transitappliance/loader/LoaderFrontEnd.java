@@ -38,7 +38,7 @@ public class LoaderFrontEnd
         // Modeled after the main method in OTP Graph Builder
         
         // arg checking
-        if (args.length != 1) {
+        if (args.length == 0) {
             System.out.println("usage: loader config.xml");
             System.exit(1);
         }
@@ -49,8 +49,9 @@ public class LoaderFrontEnd
         GenericApplicationContext ctx = new GenericApplicationContext();
         XmlBeanDefinitionReader reader = new XmlBeanDefinitionReader(ctx);
 
-        // Load config file for this agency
-        reader.loadBeanDefinitions(new FileSystemResource(args[0]));
+        // Load config file for this agency and database adapter
+        for (String file : args)
+           reader.loadBeanDefinitions(new FileSystemResource(file));
 
         // get the loader, config'd for this agency
         TransitStopLoader loader = (TransitStopLoader) ctx.getBean("transitStopLoader");
