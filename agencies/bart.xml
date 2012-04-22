@@ -9,6 +9,7 @@
     <property name="dataSource">
       <bean class="org.transitappliance.loader.GTFSDataSourceImpl">
         <property name="filePath" value="/otp/gtfs/bart.zip" />
+        <property name="gtfsAgencyId" value="BART" />
       </bean>
     </property>
 
